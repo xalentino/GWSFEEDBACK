@@ -12,7 +12,6 @@ import { AuthSession, Suggestion } from "@/types/types";
 import { SuggestionCard } from "@/components/suggestionCard";
 import CategorySheet from "@/components/mobileSheet";
 import { hasManagementAccess } from "../libs/permissions";
-import { CreditsModal } from "@/components/credits";
 import { LoginModal } from "@/components/loginModal";
 
 export default function Home() {
