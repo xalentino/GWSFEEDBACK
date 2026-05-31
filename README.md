@@ -19,7 +19,7 @@
 
   <br />
 
-  <img src="public/og.png" alt="Feedbase screenshot" width="100%" style="border-radius: 36px;" />
+  <img src="public/og.svg" alt="Feedbase screenshot" width="100%" />
 </div>
 
 ---
