@@ -2,21 +2,52 @@ import { betterAuth } from "better-auth";
 import { dbpool } from "./database";
 import { nextCookies } from "better-auth/next-js";
 import { admin } from "better-auth/plugins";
-import axios from "axios";
 import { guest, staff, owner, developer, admin as administration, contributor, perms } from "./permissions";
-import { resolveRole } from "./discord";
 import { createAuthMiddleware } from "better-auth/api";
+
+const getSocialProviders = () => {
+  if (process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET) {
+    return {
+      discord: {
+        clientId: process.env.DISCORD_CLIENT_ID,
+        clientSecret: process.env.DISCORD_CLIENT_SECRET,
+      }
+    };
+  }
+  
+  if (process.env.ROBLOX_CLIENT_ID && process.env.ROBLOX_CLIENT_SECRET) {
+    return {
+      roblox: {
+        clientId: process.env.ROBLOX_CLIENT_ID,
+        clientSecret: process.env.ROBLOX_CLIENT_SECRET,
+      }
+    };
+  }
+  
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    return {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      }
+    };
+  }
+  
+  if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+    return {
+      github: {
+        clientId: process.env.GITHUB_CLIENT_ID,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      }
+    };
+  }
+  
+  throw new Error("No OAuth providers configured in environment variables");
+};
 
 export const auth = betterAuth({
   database: dbpool,
-  socialProviders: {
-    discord: {
-      clientId: process.env.DISCORD_CLIENT_ID as string,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
-      enabled: true,
-      prompt: "consent",
-    },
-  },
+  socialProviders: getSocialProviders(),
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path === "/error") {

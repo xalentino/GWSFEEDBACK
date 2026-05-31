@@ -8,7 +8,8 @@ import { signIn } from "@/libs/sign";
 import { authClient } from "@/libs/auth-client";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { resolveOAuth } from "@/libs/resolveOAuth";
+import { resolveOAuthClient } from "@/libs/resolveOAuth";
+import { Provider } from "@/types/types";
 
 const navLinks = [
   { name: "Roadmap", href: "/" },
@@ -147,10 +148,24 @@ function UserDropdown({ user }: { user: User }) {
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [session, setSession] = useState<AuthSession | null>(null);
+  const [provider, setProvider] = useState<Provider | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState(true);
 
   useEffect(() => {
     authClient.getSession().then((s) => setSession(s as AuthSession));
+    resolveOAuthClient().then((p) => {
+      setProvider(p);
+      setLoadingProvider(false);
+    });
   }, []);
+
+  const handleSignIn = async () => {
+    if (provider) {
+      await signIn(provider);
+    } else {
+      toast.error("No OAuth provider configured");
+    }
+  };
 
   async function handleRefresh() {
     toast.loading("Updating your role...", { id: "update-toast" });
@@ -178,7 +193,7 @@ export function Navbar() {
               src="/logo.png"
               width={48}
               height={8}
-              alt=""
+              alt="Logo"
             />
           </Link>
 
@@ -199,10 +214,11 @@ export function Navbar() {
               <UserDropdown user={user} />
             ) : (
               <button
-                className="bg-white/5 hover:bg-white/15 px-4 py-1 rounded-lg transition-all cursor-pointer"
-                onClick={() => signIn(resolveOAuth())}
+                className="bg-white/5 hover:bg-white/15 px-4 py-1 rounded-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleSignIn}
+                disabled={loadingProvider}
               >
-                Login
+                {loadingProvider ? "Loading..." : "Login"}
               </button>
             )}
           </div>
@@ -290,10 +306,11 @@ export function Navbar() {
                     </div>
                   ) : (
                     <button
-                      onClick={() => signIn(resolveOAuth())}
-                      className="w-full bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                      onClick={handleSignIn}
+                      disabled={loadingProvider}
+                      className="w-full bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Login
+                      {loadingProvider ? "Loading..." : "Login"}
                     </button>
                   )}
                 </div>
