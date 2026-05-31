@@ -107,10 +107,17 @@ npm start
 Copy `.env.example` to `.env` and fill in the required values:
 
 ```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/feedbase"
+DATABASE_URL=postgresql://host:password@localhost:5432/feedbase
+BETTER_AUTH_URL=http://localhost:3000 # no trailing slash
 
-# to be worked
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_BOT_TOKEN=
+DISCORD_WEBHOOK_URL=
+DISCORD_GUILD_ID=
+
+ROBLOX_CLIENT_ID=
+ROBLOX_CLIENT_SECRET=
 ```
 
 ---
