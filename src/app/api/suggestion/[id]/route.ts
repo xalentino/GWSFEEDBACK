@@ -4,8 +4,9 @@ import { prisma } from "@/libs/database";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { ALLOWED_ROLES } from "@/libs/permissions";
+import { toSlug } from "@/libs/toSlug";
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const data = await prisma.suggestion.findUnique({
@@ -43,9 +44,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if ((suggestion.authorId !== session.user.id) && !ALLOWED_ROLES[session.user.role]) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { title, description, category, status } = await request.json();
+
+  const slug = await toSlug(title);
   const updated = await prisma.suggestion.update({
     where: { id },
-    data: { title, description, category, status },
+    data: { title, description, category, status, slug },
     include: {
       author: { select: { id: true, name: true, image: true } },
       votes: true,

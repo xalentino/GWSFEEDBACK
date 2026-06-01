@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import axios from "axios";
 import { formatWebhook } from "@/libs/text";
+import { toSlug } from "@/libs/toSlug";
 
 const CATEGORY_MAP: Record<string, SuggestionCategory> = {
   suggestion: SuggestionCategory.SUGGESTION,
@@ -24,7 +25,10 @@ export async function POST(request: Request) {
     const { title, description, categoryType } = body;
 
     if (!title || !description || !categoryType) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
     const category = CATEGORY_MAP[categoryType.toLowerCase()];
@@ -32,12 +36,60 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
 
+    const slug = await toSlug(title);
+
+    let mid = null;
+
+    if (process.env.DISCORD_WEBHOOK) {
+      const discordMsg = await axios.post(
+        `${process.env.DISCORD_WEBHOOK_URL!}?wait=true`,
+        {
+          embeds: [
+            {
+              title,
+              description,
+              color: 0xff2b87,
+              url: `${process.env.BETTER_AUTH_URL}/feedback/${slug}`,
+              author: {
+                name: `Posted by ${session.user.name}`,
+                icon_url: session.user.image ?? null,
+              },
+              fields: [
+                {
+                  name: ":bookmark_tabs: Category",
+                  value: formatWebhook(categoryType),
+                  inline: true,
+                },
+                {
+                  name: "⬆️ Upvotes",
+                  value: "0",
+                  inline: true,
+                },
+                {
+                  name: ":bar_chart: Status",
+                  value: "Pending",
+                  inline: true,
+                },
+              ],
+            },
+          ],
+          avatar_url:
+            "https://cdn.breaddevv.cc/branding/feedbase/logo-pattern.png",
+          username: "Feedbase",
+        },
+      );
+
+      mid = discordMsg.data.id;
+    }
+
     const data = await prisma.suggestion.create({
       data: {
         title,
+        slug,
         description,
         category,
-        authorId: session.user.id
+        authorId: session.user.id,
+        messageid: mid
       },
       include: {
         author: { select: { id: true, name: true, image: true } },
@@ -46,71 +98,37 @@ export async function POST(request: Request) {
       },
     });
 
-    const discordMsg = await axios.post(`${process.env.DISCORD_WEBHOOK_URL!}?wait=true`, {
-      embeds: [{
-        title,
-        description,
-        color: 0xFF2B87,
-        url: `${process.env.BETTER_AUTH_URL}/suggestion/${data.id}`,
-        author: {
-          name: `Posted by ${session.user.name}`,
-          icon_url: session.user.image ?? null,
-        },
-        fields:[
-          {
-            name: ":bookmark_tabs: Category",
-            value: formatWebhook(categoryType),
-            inline: true
-          },
-          {
-            name: "⬆️ Upvotes",
-            value: "0",
-            inline: true
-          },
-          {
-            name: ":bar_chart: Status",
-            value: "Pending",
-            inline: true
-          },
-        ]
-      }],
-      avatar_url: "https://cdn.breaddevv.cc/branding/feedbase/logo-pattern.png",
-      username: "Feedbase"
-    });
-
-    await prisma.suggestion.update({
-      where: {
-        id: data.id
-      },
-      data: {
-        messageid: discordMsg.data.id
-      }
-    })
-
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ success: false, data: null, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, data: null, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
 export async function GET() {
-  let data 
+  let data;
   try {
     data = await prisma.suggestion.findMany({
       include: {
         author: true,
         comments: true,
-        votes: true
+        votes: true,
       },
       orderBy: {
-        createdAt: "desc"
-      }
+        createdAt: "desc",
+      },
     });
   } catch (err) {
-    console.log(`An error occured while getting suggestions`, err)
-    return NextResponse.json({ success: false, data: null, error: "Internal server error" })
+    console.log(`An error occured while getting suggestions`, err);
+    return NextResponse.json({
+      success: false,
+      data: null,
+      error: "Internal server error",
+    });
   }
 
-  return NextResponse.json({ success: true, data })
+  return NextResponse.json({ success: true, data });
 }

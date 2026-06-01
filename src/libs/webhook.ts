@@ -18,7 +18,7 @@ export async function discordWebhook(sid: string, isDelete: boolean = false) {
 
     if (!data) return;
 
-    const { author, title, description, category, status, votes, messageid, id } = data;
+    const { author, title, description, category, status, votes, messageid, slug } = data;
 
     if (isDelete) {
       if (!messageid) return;
@@ -33,8 +33,8 @@ export async function discordWebhook(sid: string, isDelete: boolean = false) {
         {
           title,
           description,
-          color: 16730294,
-          url: `${process.env.BETTER_AUTH_URL}/suggestion/${id}`,
+          color: 0xff2b87,
+          url: `${process.env.BETTER_AUTH_URL}/feedback/${slug}`,
           author: {
             name: `Posted by ${author.name}`,
             icon_url: author.image ?? null,
