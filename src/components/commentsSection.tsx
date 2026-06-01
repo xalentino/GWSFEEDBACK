@@ -6,6 +6,7 @@ import { addComment, addReply, deleteComment } from "@/libs/suggestions";
 import { Comment } from "@/types/types";
 import { MarkdownRenderer } from "./mdRenderer";
 import { signIn } from "@/libs/sign";
+import { formatTimeAgo } from "@/libs/time";
 
 function Avatar({ name, image }: { name: string; image?: string }) {
   if (image)
@@ -115,11 +116,16 @@ function CommentCard({
   return (
     <div className="flex flex-col gap-2">
       <div
-        className={`bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex gap-3 ${depth > 0 ? "border-l-2 border-l-pink-900" : ""}`}
+        className={`p-4 flex gap-3 ${depth > 0 ? "border-l-2 border-l-zinc-700" : ""}`}
       >
         <Avatar name={comment.author.name} image={comment.author.image} />
         <div className="flex flex-col gap-1 flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
+            { (depth > 0 && comment.parent) && (
+              <span className="text-xs text-zinc-500">
+                Replying to {comment.parent.author.name}
+              </span>
+            )}
             <span className="text-xs font-medium text-zinc-300">
               {comment.author.name}
             </span>
@@ -132,10 +138,7 @@ function CommentCard({
               />
             )}
             <span className="text-xs text-zinc-600">
-              {new Date(comment.createdAt).toLocaleDateString("en-GB", {
-                month: "short",
-                day: "numeric",
-              })}
+              {" · "}{formatTimeAgo(new Date(comment.createdAt))}
             </span>
           </div>
           <MarkdownRenderer content={comment.content} />

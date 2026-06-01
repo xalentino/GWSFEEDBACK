@@ -4,6 +4,7 @@ export interface Comment {
   author: { name: string; image: string, id: string, role: Role };
   createdAt: string;
   parentId: string | null;
+  parent?: Comment | null;
   replies: Comment[];
 }
 

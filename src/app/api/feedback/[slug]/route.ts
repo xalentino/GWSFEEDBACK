@@ -52,7 +52,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
     include: {
       author: { select: { id: true, name: true, image: true } },
       votes: true,
-      comments: true,
+      comments: {
+        include: {
+          author: true,
+          parent: true,
+          replies: {
+            include: {
+              parent: true,
+              author: true
+            }
+          }
+        }
+      },
     },
   });
 

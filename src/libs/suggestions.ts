@@ -54,7 +54,7 @@ export async function addReply(suggestionId: string, content: string, parentId: 
   if (!session?.user) throw new Error("Unauthenticated");
   return await prisma.comment.create({
     data: { content, authorId: session.user.id, suggestionId, parentId },
-    include: { author: true },
+    include: { author: true, parent: true },
   });
 }
 

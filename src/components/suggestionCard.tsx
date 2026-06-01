@@ -35,7 +35,7 @@ export function SuggestionCard({
             <h3 className="font-semibold text-sm">{suggestion.title}</h3>
           </div>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            {suggestion.description}
+            {suggestion.description.length > 1024 ? suggestion.description.substring(0, 1021) + "..." : suggestion.description}
           </p>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <Image
