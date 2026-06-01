@@ -79,6 +79,7 @@ model Account {
 
 model Suggestion {
   id          String   @id @default(cuid())
+  slug        String   @unique
   title       String
   description String
   status      SuggestionStatus @default(PENDING)
