@@ -9,25 +9,40 @@ import { toSlug } from "@/libs/toSlug";
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
+    
+    const allComments = await prisma.comment.findMany({
+      where: { suggestionId: (await prisma.suggestion.findUnique({ where: { slug } }))?.id },
+      include: {
+        author: true,
+        parent: true,
+        suggestion: true,
+      },
+    });
+    
+    const buildCommentTree = (comments: any[], parentId: string | null = null): any[] => {
+      return comments
+        .filter(comment => comment.parentId === parentId)
+        .map(comment => ({
+          ...comment,
+          replies: buildCommentTree(comments, comment.id)
+        }))
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    };
+    
+    const nestedComments = buildCommentTree(allComments, null);
+    
     const data = await prisma.suggestion.findUnique({
       where: { slug },
       include: {
         author: true,
-        comments: {
-          where: { parentId: null },
-          include: {
-            author: true,
-            parent: true,
-            replies: {
-              include: { author: true },
-            },
-            suggestion: true,
-          },
-        },
         votes: true,
       },
     });
-    return NextResponse.json({ success: true, data: data ?? null });
+    
+    return NextResponse.json({ 
+      success: true, 
+      data: { ...data, comments: nestedComments } 
+    });
   } catch (err) {
     console.log("An error occured while getting suggestions", err);
     return NextResponse.json({ success: false, data: null, error: "Internal server error" });

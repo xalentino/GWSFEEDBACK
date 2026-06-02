@@ -216,7 +216,7 @@ export function Navbar() {
               <button
                 className="bg-white/5 hover:bg-white/15 px-4 py-1 rounded-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSignIn}
-                disabled={loadingProvider}
+                disabled={!!loadingProvider}
               >
                 {loadingProvider ? "Loading..." : "Login"}
               </button>

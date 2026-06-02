@@ -1,7 +1,14 @@
 "use client";
 import { useState, useTransition } from "react";
 import Image from "next/image";
-import { MessageCircle, Send, CornerDownRight, Trash2 } from "lucide-react";
+import {
+  MessageCircle,
+  Send,
+  CornerDownRight,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { addComment, addReply, deleteComment } from "@/libs/suggestions";
 import { Comment } from "@/types/types";
 import { MarkdownRenderer } from "./mdRenderer";
@@ -20,7 +27,7 @@ function Avatar({ name, image }: { name: string; image?: string }) {
       />
     );
   return (
-    <div className="w-7 h-7 rounded-full bg-pink-950 border border-pink-900 flex items-center justify-center text-xs text-pink-400 font-medium shrink-0 mt-0.5">
+    <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary flex items-center justify-center text-xs text-pink-400 font-medium shrink-0 mt-0.5">
       {name[0].toUpperCase()}
     </div>
   );
@@ -40,22 +47,24 @@ function CommentInput({
   onCancel?: () => void;
 }) {
   const [value, setValue] = useState("");
+
   function handle() {
     if (!value.trim()) return;
     onSubmit(value.trim());
     setValue("");
   }
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-2">
-        <input // here add markdown stuff too
+        <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handle()}
+          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handle()}
           placeholder={placeholder}
           disabled={disabled}
           autoFocus={autoFocus}
-          className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-pink-500 transition-colors disabled:opacity-50"
+          className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-primary transition-colors disabled:opacity-50"
         />
         <button
           onClick={handle}
@@ -78,23 +87,54 @@ function CommentInput({
   );
 }
 
+function ThreadCollapser({
+  isCollapsed,
+  onToggle,
+  replyCount,
+}: {
+  isCollapsed: boolean;
+  onToggle: () => void;
+  replyCount: number;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors mt-1"
+    >
+      {isCollapsed ? (
+        <ChevronRight className="w-3 h-3" />
+      ) : (
+        <ChevronDown className="w-3 h-3" />
+      )}
+      {replyCount} {replyCount === 1 ? "reply" : "replies"}
+    </button>
+  );
+}
+
 function CommentCard({
   comment,
   suggestionId,
   currentUserId,
   depth = 0,
   suggestionAuthorId,
+  maxDepth = 6,
+  isHighlighted = false,
 }: {
   comment: Comment;
   suggestionId: string;
   currentUserId?: string;
   depth?: number;
   suggestionAuthorId: string;
+  maxDepth?: number;
+  isHighlighted?: boolean;
 }) {
   const [replying, setReplying] = useState(false);
   const [replies, setReplies] = useState<Comment[]>(comment.replies ?? []);
   const [isPending, startTransition] = useTransition();
   const [deleted, setDeleted] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showAllReplies, setShowAllReplies] = useState(false);
+  const [newReplyId, setNewReplyId] = useState<string | null>(null);
 
   function handleDelete() {
     startTransition(async () => {
@@ -108,53 +148,98 @@ function CommentCard({
     startTransition(async () => {
       const newReply = await addReply(suggestionId, content, comment.id);
       setReplies((prev) => [...prev, newReply as unknown as Comment]);
+      setIsCollapsed(false);
+      setShowAllReplies(true);
+      setNewReplyId(newReply.id);
+      setTimeout(() => setNewReplyId(null), 2000);
     });
   }
 
   if (deleted) return null;
 
+  const displayedReplies = showAllReplies ? replies : replies.slice(0, 3);
+  const hasMoreReplies = replies.length > 3;
+
+  if (depth >= maxDepth && replies.length > 0) {
+    return (
+      <div
+        className={`p-4 flex gap-3 transition-all duration-700 ${
+          depth > 0 ? "border-l-2" : ""
+        } ${isHighlighted ? "bg-yellow-600/15" : ""}`}
+        style={{
+          marginLeft: depth > 0 ? `${Math.min(depth * 12, 40)}px` : 0,
+          borderColor: isHighlighted ? "rgb(234 179 8 / 0.6)" : "rgb(63 63 70)",
+        }}
+      >
+        <Avatar name={comment.author.name} image={comment.author.image} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-medium text-zinc-300">
+              {comment.author.name}
+            </span>
+            <span className="text-xs text-zinc-600">
+              {formatTimeAgo(new Date(comment.createdAt))}
+            </span>
+          </div>
+          <MarkdownRenderer content={comment.content} />
+          <ThreadCollapser
+            isCollapsed={!showAllReplies}
+            onToggle={() => setShowAllReplies(true)}
+            replyCount={replies.length}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <div
-        className={`p-4 flex gap-3 ${depth > 0 ? "border-l-2 border-l-zinc-700" : ""}`}
+        className={`p-4 flex gap-3 transition-all duration-700 ${
+          depth > 0 ? "border-l-2" : ""
+        } ${isHighlighted ? "bg-yellow-600/15" : ""} ${
+          depth >= 4 ? "bg-zinc-900/20" : ""
+        }`}
+        style={{
+          marginLeft: depth > 0 ? `${Math.min(depth * 16, 48)}px` : 0,
+          borderColor: isHighlighted ? "rgb(234 179 8 / 0.6)" : "rgb(63 63 70)",
+        }}
       >
         <Avatar name={comment.author.name} image={comment.author.image} />
         <div className="flex flex-col gap-1 flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            { (depth > 0 && comment.parent) && (
-              <span className="text-xs text-zinc-500">
-                Replying to {comment.parent.author.name}
-              </span>
-            )}
             <span className="text-xs font-medium text-zinc-300">
               {comment.author.name}
             </span>
-            {comment.author.role != "guest" && (
+            {comment.author.role !== "guest" && (
               <Image
                 src={`/roles/${comment.author.role}.svg`}
-                alt="a"
+                alt="role"
                 height={16}
                 width={16}
+                className="shrink-0"
               />
             )}
             <span className="text-xs text-zinc-600">
-              {" · "}{formatTimeAgo(new Date(comment.createdAt))}
+              {" · "}
+              {formatTimeAgo(new Date(comment.createdAt))}
             </span>
           </div>
           <MarkdownRenderer content={comment.content} />
-          <div className="flex flex-row">
-            {currentUserId && depth === 0 && (
+          <div className="flex flex-row gap-3">
+            {currentUserId && depth < maxDepth && (
               <button
                 onClick={() => setReplying((v) => !v)}
-                className="flex items-center gap-1 text-xs text-zinc-600 hover:text-pink-400 transition-colors w-fit mt-1 mr-2"
+                className="flex items-center gap-1 text-xs text-zinc-600 hover:text-blue-400 transition-colors w-fit mt-1"
               >
                 <CornerDownRight className="w-3 h-3" />
                 Reply
               </button>
             )}
-            {currentUserId === suggestionAuthorId && (
+            {(currentUserId === suggestionAuthorId ||
+              currentUserId === comment.author.id) && (
               <button
-                onClick={() => handleDelete()}
+                onClick={handleDelete}
                 className="flex items-center gap-1 text-xs text-zinc-600 hover:text-red-400 transition-colors w-fit mt-1"
               >
                 <Trash2 className="w-3 h-3" />
@@ -165,19 +250,46 @@ function CommentCard({
         </div>
       </div>
 
-      {(replies.length > 0 || replying) && (
-        <div className="ml-6 flex flex-col gap-2">
-          {replies.map((reply) => (
-            <CommentCard
-              key={reply.id}
-              comment={reply}
-              suggestionAuthorId={suggestionAuthorId}
-              suggestionId={suggestionId}
-              currentUserId={currentUserId}
-              depth={depth + 1}
+      <div className="flex flex-col gap-2">
+        {replies.length > 0 && depth < maxDepth - 1 && (
+          <div style={{ marginLeft: `${Math.min(depth * 16, 48)}px` }}>
+            <ThreadCollapser
+              isCollapsed={isCollapsed}
+              onToggle={() => setIsCollapsed((v) => !v)}
+              replyCount={replies.length}
             />
-          ))}
-          {replying && (
+          </div>
+        )}
+
+        {!isCollapsed && replies.length > 0 && (
+          <>
+            {displayedReplies.map((reply) => (
+              <CommentCard
+                key={reply.id}
+                comment={reply}
+                suggestionAuthorId={suggestionAuthorId}
+                suggestionId={suggestionId}
+                currentUserId={currentUserId}
+                depth={depth + 1}
+                maxDepth={maxDepth}
+                isHighlighted={reply.id === newReplyId}
+              />
+            ))}
+
+            {hasMoreReplies && !showAllReplies && (
+              <button
+                onClick={() => setShowAllReplies(true)}
+                className="text-xs text-pink-400 hover:text-pink-300 transition-colors w-fit"
+                style={{ marginLeft: `${Math.min((depth + 1) * 16, 48)}px` }}
+              >
+                Show {replies.length - 3} more replies...
+              </button>
+            )}
+          </>
+        )}
+
+        {replying && depth < maxDepth && (
+          <div style={{ marginLeft: `${Math.min((depth + 1) * 16, 48)}px` }}>
             <CommentInput
               placeholder={`Reply to ${comment.author.name}...`}
               onSubmit={handleReply}
@@ -185,9 +297,9 @@ function CommentCard({
               autoFocus
               onCancel={() => setReplying(false)}
             />
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -213,11 +325,25 @@ export function CommentsSection({
     });
   }
 
+  const totalCommentsCount = comments.reduce((count, comment) => {
+    const countReplies = (c: Comment): number =>
+      1 + (c.replies?.reduce((acc, r) => acc + countReplies(r), 0) ?? 0);
+    return count + countReplies(comment);
+  }, 0);
+
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-xs font-semibold text-zinc-600 uppercase tracking-widest">
-        Comments · {comments.length}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-zinc-600 uppercase tracking-widest">
+          Comments · {totalCommentsCount}
+        </p>
+        {comments.length > 0 && (
+          <p className="text-xs text-zinc-600">
+            {comments.length}{" "}
+            {comments.length === 1 ? "conversation" : "conversations"}
+          </p>
+        )}
+      </div>
 
       {comments.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-10 text-zinc-600">
@@ -239,15 +365,17 @@ export function CommentsSection({
       )}
 
       {currentUserId ? (
-        <CommentInput onSubmit={handleNewComment} disabled={isPending} />
+        <div className="mt-4 pt-4 border-t border-zinc-800">
+          <CommentInput onSubmit={handleNewComment} disabled={isPending} />
+        </div>
       ) : (
         <div className="flex justify-center">
-          <p
-            className="text-sm text-zinc-600 text-center py-2 w-2xl hover:text-primary decoration-primary hover:underline cursor-pointer bg-zinc-500/10 rounded-lg mx-2xl border border-zinc-700/50"
+          <button
+            className="text-sm text-zinc-600 text-center py-2 w-full hover:text-primary transition-colors bg-zinc-500/10 rounded-lg border border-zinc-700/50"
             onClick={() => signIn("discord")}
           >
             Log in to leave a comment.
-          </p>
+          </button>
         </div>
       )}
     </div>
