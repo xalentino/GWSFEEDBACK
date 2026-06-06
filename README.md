@@ -102,7 +102,9 @@ npm start
 ### One-click deploys
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/feedbase)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/breadddevv/feedbase&project-name=feedbase&root-directory=apps/web&framework=nextjs&env=DATABASE_URL,BETTER_AUTH_URL&envDescription=Supabase%20Project%20URL,Supabase%20Anon%20Key,GitHub%20OAuth%20Client%20ID,GitHub%20OAuth%20Client%20Secret,Resend%20API%20Key%20(Optional),Root%20Domain)
+
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/breadddevv/feedbase&project-name=feedbase&root-directory=apps/web&framework=nextjs&env=DATABASE_URL,BETTER_AUTH_URL,DISCORD_CLIENT_ID,DISCORD_CLIENT_SECRET,DISCORD_BOT_TOKEN,DISCORD_WEBHOOK_URL,DISCORD_GUILD_ID&envDescription=PostgreSQL%20Connection%20URL,Better%20Auth%20Base%20URL%20(no%20trailing%20slash),Discord%20OAuth%20Client%20ID,Discord%20OAuth%20Client%20Secret,Discord%20Bot%20Token,Discord%20Webhook%20URL,Discord%20Guild%20ID)
 
 ---
 
