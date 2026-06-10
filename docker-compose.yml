@@ -16,7 +16,7 @@ services:
   db:
     image: "postgres:latest"
     healthcheck:
-      test: pg_isready -U postgres -h localhost
+      test: pg_isready -U ${POSTGRES_USER} -h localhost
       interval: 5s
       timeout: 5s
       retries: 10
