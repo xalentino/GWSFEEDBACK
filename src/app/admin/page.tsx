@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { authClient } from "@/libs/auth-client";
-import { AuthSession, ManagedUser, Role } from "@/types/types";
+import { ManagedUser, Role } from "@/types/types";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import axios from "axios";
@@ -407,7 +407,7 @@ function UserRow({ user, currentUserId, onRoleChange, onBan, onUnban, onDeletePo
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 export default function ManagePage() {
-  const [session, setSession] = useState<AuthSession | null | undefined>(undefined);
+  const [session, setSession] = useState<Awaited<ReturnType<typeof authClient.getSession>> | undefined>(undefined);
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -418,13 +418,27 @@ export default function ManagePage() {
   const [profileTarget, setProfileTarget] = useState<ManagedUser | null>(null);
   const [profileEditTarget, setProfileEditTarget] = useState<ManagedUser | null>(null);
 
-  useEffect(() => { authClient.getSession().then((s) => setSession(s as AuthSession)); }, []);
   useEffect(() => {
+    authClient.getSession()
+      .then((s) => setSession(s ?? null))
+      .catch(() => setSession(null));
+  }, []);
+
+  const currentRole = session?.data?.user?.role;
+  const isAdminOrOwner = currentRole === "admin" || currentRole === "owner";
+
+  useEffect(() => {
+    if (session === undefined) return;
+    if (!isAdminOrOwner) {
+      setLoading(false);
+      return;
+    }
+
     axios.get("/api/admin/users")
       .then((res) => setUsers(res.data.data))
       .catch(() => toast.error("Failed to load users."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [session, isAdminOrOwner]);
 
   async function handleRoleChange(userId: string, role: Role) {
     toast.loading("Updating role...", { id: "role-toast" });
@@ -506,6 +520,7 @@ export default function ManagePage() {
   });
 
   if (session === undefined) return null;
+  if (!isAdminOrOwner) notFound();
 
   return (
     <div className="min-h-screen bg-black">
