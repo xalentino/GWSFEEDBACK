@@ -2,6 +2,7 @@ allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true
   es5-ext: true
+  fsevents: true
   prisma: true
   sharp: true
   uglifyjs-webpack-plugin: true
