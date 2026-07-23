@@ -7,7 +7,7 @@ const ROLE_MAP: Record<string, string> = {
   '1356766404103246015': "staff" // staff
 };
 
-const PRIORITY_ORDER = ["owner", "admin", "developer", "staff", "contributor"];
+const PRIORITY_ORDER = ["owner", "admin", "developer", "staff"];
 
 export function resolveRole(discordRoles: string[]): string {
   const matchedRoles = discordRoles
