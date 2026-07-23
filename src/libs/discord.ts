@@ -1,9 +1,9 @@
 const ROLE_MAP: Record<string, string> = {
   '1494144464715907133': "owner", // Group Holder
   '1363545887565021364': "admin", // Executive Team
-  '1501295951405645926': "developer", // engineering team
-  '1500426637744013422': "staff", // Team Boostify role
-  '1500439003672088588': "contributor" // contributor, as you guessed
+  '1471333401431638038': "developer", // Development Team
+  '1357075397409243266': "staff", // Management Team
+  '1356766404103246015': "staff" // staff
 };
 
 export function resolveRole(discordRoles: string[]): string {
