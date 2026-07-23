@@ -13,6 +13,8 @@ export default function ConsentGate() {
   const accept = () => {
     localStorage.setItem("gwsfeedback_consent", "true");
     setVisible(false);
+
+    fetch("/api/consent/log", { method: "POST" }).catch(() => {});
   };
 
   if (!visible) return null;
