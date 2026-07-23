@@ -6,11 +6,11 @@ import { useState } from "react";
 
 const ROLES: { id: Role; label: string }[] = [
   { id: "guest", label: "Guest" },
-  { id: "admin", label: "Admin" },
+  { id: "admin", label: "Executive Team" },
   { id: "owner", label: "Owner" },
-  { id: "contributor", label: "Contributor" },
-  { id: "developer", label: "Developer" },
-  { id: "staff", label: "Team Boostify" },
+  { id: "developer", label: "Development Team" },
+  { id: "staff", label: "Corporate Team" },
+  { id: "staff", label: "Management Team" },
 ];
 
 const ROLE_STYLES: Record<Role, string> = {
