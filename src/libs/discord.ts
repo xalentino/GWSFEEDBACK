@@ -7,9 +7,16 @@ const ROLE_MAP: Record<string, string> = {
   '1356766404103246015': "staff" // staff
 };
 
+const PRIORITY_ORDER = ["owner", "admin", "developer", "staff", "contributor"];
+
 export function resolveRole(discordRoles: string[]): string {
-  for (const roleId of discordRoles) {
-    if (ROLE_MAP[roleId]) return ROLE_MAP[roleId];
+  const matchedRoles = discordRoles
+    .map((id) => ROLE_MAP[id])
+    .filter(Boolean);
+
+  for (const priorityRole of PRIORITY_ORDER) {
+    if (matchedRoles.includes(priorityRole)) return priorityRole;
   }
+
   return "guest";
 }
