@@ -5,6 +5,7 @@ import { Navbar } from "@/components/topbar";
 import { Footer } from "@/components/footer";
 import { Toaster } from 'react-hot-toast';
 import { BanCheck } from "@/components/banCheck";
+import ConsentGate from "@/components/consentGate";
 
 const geistSans = Inter({
   variable: "--font-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <ConsentGate />
         <BanCheck />
         <Navbar />
         {children}
